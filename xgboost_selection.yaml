@@ -1,0 +1,30 @@
+name: xgboost-selection
+channels:
+    - pytorch
+    - conda-forge
+    - bioconda
+dependencies:
+    - pandas==1.2.0
+    - matplotlib==3.3.0
+    - numpy==1.22
+    - scipy==1.7.3
+    - pytorch==1.10
+    - zarr==2.10.3
+    - scikit-learn==1.0.2
+    - snakemake==6.13.1
+    - tqdm==4.62.3
+    - jupyter==1.0.0
+    - plink
+    - plink2
+    - cython==0.29.25
+    - lightgbm==3.3.2
+    - pip
+    - pip:
+      - pytorch-lightning==1.6.0
+      - mlflow==1.23.0
+      - xgboost==1.1.0
+      - bed-reader
+      - hydra-core
+      - ukb-loader
+      - git+https://github.com/chrchang/plink-ng/#egg=pgenlib&subdirectory=2.0/Python
+

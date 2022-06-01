@@ -1,0 +1,19 @@
+phenotype:
+  name: height
+  type: real
+  code: 50
+  features: 
+    - 21003
+    - 31
+params:
+  meta:
+    snp_window_len: 1000
+    window_trees: 100
+    direction: forward
+  xgb:
+    eta: 0.05
+    alpha: 20.0
+    max_depth: 2
+    subsample: 1.0
+    gamma: 0.0
+random_state: 1 

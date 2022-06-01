@@ -1,0 +1,10 @@
+split:
+  name: white_british
+  location: /gpfs/gpfs0/ukb_data/processed_data/all/splits
+genotype:
+  root: /gpfs/gpfs0/ukb_data/raw_data/white_british/pgen
+  train: ${.root}/train
+  val: ${.root}/valid
+  test: ${.root}/test
+pca_dir: /gpfs/gpfs0/ukb_data/processed_data/white_british/flashpca
+run_dir: /gpfs/gpfs0/ukb_data/runs
