@@ -1,3 +1,4 @@
+import pickle
 import xgboost
 import numpy
 from tqdm import tnrange
@@ -631,72 +632,19 @@ def get_train_test_indices(train_path, test_path, trait_data, is_clf=False, chro
     return train_psam.loc[mask.ravel()], test_psam.loc[test_mask.ravel()]
 
 
-def select_features_pgen_as_random(pgen_path,
-                         y_train_cache,
-                         mask,
-                         pgen_test_path=None,
-                         y_test_cache=None,
-                         test_mask=None,
-                         snp_window_len=1000,
-                         window_trees=100, 
-                         m_eta=0.5,
-                         verbose=False,
-                         history=None,
-                         reverse_direction=False,
-                         is_clf=False,
-                         y_train_start=None,
-                         y_test_start=None,
-                         selector_func=None,
-                         max_iterations=None,
-                         **kwargs):
-    
-    reader = PgenReader(bytes(pgen_path, encoding='utf-8'))
-    
-    sample_count = reader.get_raw_sample_ct()
-    variant_count = reader.get_variant_ct()
-    
-    file_gain_data = numpy.zeros((variant_count))
-    if pgen_test_path is not None:
-        test_reader = PgenReader(bytes(pgen_test_path, encoding='utf-8'))
-        test_sample_count = test_reader.get_raw_sample_ct()
+def load_selector(run):
+    with open(run.results_path('selector.pkl'), 'rb') as file:
+        selector = pickle.load(file)
 
-    iterator = tnrange(0, variant_count, snp_window_len)
-    
-    iters = 0
-    for left in iterator:
-        if max_iterations is not None:
-            if iters >= max_iterations:
-                break
-            iters += 1
-    
-        order = numpy.random.shuffle(numpy.arange(variant_count))
-        remainder = variant_count - left if not reverse_direction else left
-        features_count = snp_window_len if remainder >= snp_window_len else remainder
-        X = numpy.zeros((sample_count, features_count), dtype=numpy.int8)
-        
-        reader.read_list(order[left:left + features_count], X, sample_maj=True, allele_idx=0)
-        
-        X_test = numpy.zeros((test_sample_count, features_count), dtype=numpy.int8)
-            
-        test_reader.read_list(order[left:left + features_count], X_test, sample_maj=True, allele_idx=0)
-            
-        block_gain, y_train_pred, y_test_pred = selector_func(X[mask.ravel()], 
-                                                              y_train_cache,
-                                                              X_test[test_mask.ravel()],
-                                                              y_test_cache,
-                                                              rounds=window_trees, 
-                                                              verbose=verbose,
-                                                              history=history,
-                                                              is_clf=is_clf,
-                                                              y_start=y_train_start,
-                                                              y_test_start=y_test_start,
-                                                              **kwargs)
-            
-        y_test_cache = y_test_pred
-        y_train_cache = y_train_pred 
-        gc.collect()
-        for feature, gain in block_gain.items():
-            feature_idx = order[left:left + features_count][int(feature[1:])]
-            file_gain_data[feature_idx] = gain
-    
-    return file_gain_data, y_train_cache, y_test_cache
+    return selector
+
+def get_model_path(prefix, run, fc, params, cov_number):
+    raw_name = prefix + f'_{fc // 1000}k_cov{cov_number}_'
+    names = []
+    for name, value in params.items():
+        if name != 'interaction_constraints':
+            names.append(f'{name}-{value}')
+        else:
+            names.append('noint')
+    raw_name += '_'.join(names) + '.model'
+    return run.model_path(raw_name)

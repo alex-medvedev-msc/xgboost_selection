@@ -5,15 +5,24 @@ phenotype:
   features: 
     - 21003
     - 31
-params:
-  meta:
-    snp_window_len: 1000
-    window_trees: 100
-    direction: forward
-  xgb:
+meta:
+  snp_window_len: 1000
+  window_trees: 100
+  direction: forward
+  pred_feature_count: 1000
+xgbsel:
+  eta: 0.05
+  alpha: 20.0
+  max_depth: 2
+  subsample: 1.0
+  gamma: 0.0
+pred_model:
+  name: xgboost
+  params:
     eta: 0.05
     alpha: 20.0
     max_depth: 2
-    subsample: 1.0
+    subsample: 0.75
     gamma: 0.0
 random_state: 1 
+snapshot: null

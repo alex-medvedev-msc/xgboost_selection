@@ -23,7 +23,7 @@ def run_selection(cfg: DictConfig):
         'output_dir': os.getcwd()
     }
     run.save_params(description, OmegaConf.to_container(cfg.experiment.params))
-
+    print(f'created run {run}')
     random.seed(cfg.experiment.random_state)
     numpy.random.seed(cfg.experiment.random_state)
 
@@ -45,7 +45,7 @@ def run_selection(cfg: DictConfig):
         is_clf=(cfg.experiment.phenotype.type != 'real'),
         tree_method='gpu_hist',
         early_stopping_rounds=20,
-        **cfg.experiment.params.xgb
+        **cfg.experiment.params.xgbsel
     )
     
     selector.fit()

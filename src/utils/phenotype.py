@@ -11,7 +11,6 @@ class PhenoData:
     test: pandas.DataFrame
     features: pandas.DataFrame
 
-
 @dataclass
 class UKBPhenoData:
     train: pandas.DataFrame
@@ -57,11 +56,17 @@ def add_pca_to_ukb_data(ukb_data: UKBPhenoData, pc_data: PCData) -> UKBPhenoData
 
 
 def _ukb_phenotype_to_xgboost(ukb_data: UKBPhenoData) -> PhenoData:
-    xgb_train = pandas.concat([ukb_data.train, ukb_data.val], axis=0).iloc[:, -1:].rename({ukb_data.pheno_code: 'trait'}, axis='columns')
+    xgb_train = pandas.concat([ukb_data.train, ukb_data.val], axis=0).iloc[:, -1:]
     xgb_train = xgb_train.set_index(xgb_train.index, append=True)
     xgb_train.index.set_names(['FID', 'IID'], inplace=True)
+    print(f'befor renaming columns in train: {xgb_train.columns}, pheno_code: {ukb_data.pheno_code}')
+    xgb_train.columns = xgb_train.columns.astype(str)
+    print(f'pheno code in columns? {str(ukb_data.pheno_code) in xgb_train.columns}')
+    xgb_train.rename(columns={str(ukb_data.pheno_code): 'trait'}, inplace=True, errors='raise')
+    print(f'after renaming columns in train: {xgb_train.columns}')
+    print(f'dtype of col names are: {[type(c) for c in xgb_train.columns]}')
 
-    xgb_test = ukb_data.test.iloc[:, -1:].rename({'20002': 'trait'}, axis='columns')
+    xgb_test = ukb_data.test.iloc[:, -1:].rename(columns={str(ukb_data.pheno_code): 'trait'})
     xgb_test = xgb_test.set_index(xgb_test.index, append=True)
     xgb_test.index.set_names(['FID', 'IID'], inplace=True)
 
@@ -83,7 +88,11 @@ def load_csv_phenotype(cfg: DictConfig) -> UKBPhenoData:
     train = train.merge(phenotype_data, how='inner', left_index=True, right_index=True).drop(code, axis='columns')
     val = val.merge(phenotype_data, how='inner', left_index=True, right_index=True).drop(code, axis='columns')
     test = test.merge(phenotype_data, how='inner', left_index=True, right_index=True).drop(code, axis='columns')
-    return UKBPhenoData(train, val, test, cfg.experiment.phenotype.code)
+    train.columns = [str(c) for c in train.columns]
+    val.columns = [str(c) for c in val.columns]
+    test.columns = [str(c) for c in test.columns]
+
+    return UKBPhenoData(train, val, test, str(cfg.experiment.phenotype.code))
 
 
 def load_sd_phenotype(cfg: DictConfig) -> UKBPhenoData:

@@ -1,0 +1,8 @@
+name: xgboost
+params:
+  eta: 0.05
+  alpha: 20.0
+  max_depth: 2
+  subsample: 0.75
+  gamma: 0.0
+  tree_method: gpu_hist
