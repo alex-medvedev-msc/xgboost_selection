@@ -28,7 +28,10 @@ class Data:
             y_test = scaler.transform(self.y_test.reshape(-1, 1))
         else:
             y_test = None
-        return Data(self.X_train, self.X_val, self.X_test, y_train, y_val, y_test, self.cov_count)
+        
+        data = Data(self.X_train, self.X_val, self.X_test, y_train, y_val, y_test, self.cov_count)
+        data.scaler = scaler
+        return data
 
 
 class Model(ABC):
@@ -54,7 +57,7 @@ class XGBoostModel(Model):
                                                       self.model_args.model_path, 
                                                       base_score=data.y_train.mean(),
                                                       scale_pos_weight=1,
-                                                      num_round=100,
+                                                      num_round=self.model_args.num_round,
                                                       eval_metric=eval_metric,
                                                       is_clf=self.model_args.is_clf,
                                                       **self.model_args.params)

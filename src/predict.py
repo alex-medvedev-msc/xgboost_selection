@@ -64,7 +64,8 @@ def run(cfg: DictConfig):
     print(f'We predicted {y_pred.shape[0]} rows from {X_test.shape} rows and features')
     y = pheno_data.test.merge(y_pred, how='inner', left_index=True, right_index=True)
     print(f'After merge with loaded test data with shape {pheno_data.test.shape} we have {y.shape[0]} rows to eval')
-   
+    
+    y.loc[:, 'trait'] = data.scaler.transform(y.trait.values.reshape(-1, 1))
     score(y.trait.values, y.y_pred.values, X_train.shape[1], 'test', selector.is_clf)
 
 
