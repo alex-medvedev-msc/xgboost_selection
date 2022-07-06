@@ -1,8 +1,8 @@
 name: xgboost
-num_round: 5000
+num_round: 7000
 params:
   eta: 0.05
-  alpha: 20.0
+  alpha: 5.0
   max_depth: 2
   subsample: 0.75
   gamma: 0.0

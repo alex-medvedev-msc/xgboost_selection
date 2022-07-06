@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import Tuple
 import numpy
 from omegaconf import DictConfig, OmegaConf
 import pandas
 import xgboost
 import lightgbm
+from catboost import CatBoostRegressor, Pool, metrics, FeaturesData
 from sklearn.preprocessing import StandardScaler
 
 from .xgb_utils import train_booster_on_array
@@ -64,8 +66,12 @@ class XGBoostModel(Model):
         self.model = model
         return y_val_pred
 
+    def load_model_from_path(self):
+        booster = xgboost.Booster()
+        booster.load_model(self.model_args.model_path)
+        self.model = booster
 
-    def predict(self, data: Data) -> pandas.DataFrame:
+    def predict(self, data: Data) -> Tuple[numpy.ndarray, pandas.DataFrame]:
         limit = int(self.model.attributes()['best_iteration'])
     
         dmatrix = xgboost.DMatrix(data.X_test.values, missing=-9)
@@ -106,4 +112,47 @@ class LightGBMModel(Model):
         y_test_pred = self.model.predict(data.X_test.values, num_iteration=self.model.best_iteration)
         return y_test_pred
 
+
+class CatBoostModel(Model):
+    def fit(self, data: Data) -> numpy.ndarray:
+        snp_count = data.X_train.shape[1] - data.cov_count
+        
+        model = CatBoostRegressor(
+            early_stopping_rounds=100,
+            loss_function='RMSE'
+        )
+        '''
+        train_data = FeaturesData(
+            cat_feature_data=data.X_train[:, :snp_count].astype(numpy.dtype('U8')).astype(object),
+            num_feature_data=data.X_train[:, snp_count:]
+        )
+        val_data = FeaturesData(
+            cat_feature_data=data.X_val[:, :snp_count].astype(numpy.dtype('U8')).astype(object),
+            num_feature_data=data.X_val[:, snp_count:]
+        )
+        '''
+
+        train_pool = Pool(data.X_train, data.y_train)
+        val_pool = Pool(data.X_val, data.y_val)
+
+        model.fit(train_pool,
+                  eval_set=val_pool,
+                  use_best_model=True)
+
+        self.model = model
+        y_val_pred = model.predict(val_pool)
+        return y_val_pred
+
+    def predict(self, data: Data) -> pandas.DataFrame:
+        snp_count = data.X_train.shape[1] - data.cov_count
+
+        '''
+        test_data = FeaturesData(
+            cat_feature_data=data.X_test.values[:, :snp_count].astype(numpy.dtype('U8')).astype(object),
+            num_feature_data=data.X_test.values[:, snp_count:]
+        )
+        '''
+        test_pool = Pool(data.X_test.values, data.y_test)
+        y_test_pred = self.model.predict(test_pool)
+        return y_test_pred
 
