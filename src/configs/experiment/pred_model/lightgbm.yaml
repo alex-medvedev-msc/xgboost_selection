@@ -1,0 +1,12 @@
+name: lightgbm
+num_round: 2000
+params:
+  metric: rmse
+  objective: regression
+  num_leaves: 4
+  max_depth: 2
+  feature_fraction: 0.5
+  verbosity: 1
+  eta: 0.05
+  bagging_freq: 5
+  bagging_fraction: 0.5
